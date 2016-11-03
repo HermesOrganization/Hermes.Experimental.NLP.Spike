@@ -4,6 +4,13 @@ engines:
       quotes: 
         enabled: false
     enabled: true
+  duplication:
+    enabled: true
+    config:
+      languages:
+        - javascript
+  nodesecurity:
+    enabled: true
 exclude_paths: 
   - test/**/*
 ratings: 
