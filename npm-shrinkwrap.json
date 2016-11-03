@@ -1,0 +1,11 @@
+{
+  "name": "hermes.experimental.nlp.spike",
+  "version": "0.0.0",
+  "dependencies": {
+    "node-uuid": {
+      "version": "1.4.7",
+      "from": "node-uuid@latest",
+      "resolved": "https://registry.npmjs.org/node-uuid/-/node-uuid-1.4.7.tgz"
+    }
+  }
+}
