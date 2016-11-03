@@ -37,6 +37,9 @@
     "pretty-error": "^2.0.2"
   },
   "dependencies": {
-    "node-uuid": "^1.4.7"
+    "dotenv": "^2.0.0",
+    "node-uuid": "^1.4.7",
+    "node-wit": "^4.1.0",
+    "winston": "^2.3.0"
   }
 }
