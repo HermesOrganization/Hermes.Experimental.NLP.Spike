@@ -105,6 +105,7 @@ app.get('/webhook', (req, res) => {
 
       entry.messaging.forEach(function (event) {
         if (event.message) {
+          console.log(event.message);
           receivedMessage(event);
         } else {
           console.log('Webhook received unknown event: ', event);
