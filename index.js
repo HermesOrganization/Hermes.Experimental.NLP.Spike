@@ -24,7 +24,7 @@ app.use(errorHandler({
 }));
 
 app.get('/', (req, res) => {
-  res.json({'message': 'Hello World'});
+  res.json({'message': new HermesNLP()});
 });
 
 app.get('/webhook', function(req, res) {
@@ -45,3 +45,10 @@ console.log(`localhost:${PORT}`);
 process.on('uncaughtException', error => {
   console.log(error);
 });
+
+
+export class HermesNLP {
+  constructor () {
+    return "Hermes NLP";
+  }
+}

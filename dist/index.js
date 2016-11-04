@@ -1,5 +1,10 @@
 'use strict';
 
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.HermesNLP = undefined;
+
 var _express = require('express');
 
 var _express2 = _interopRequireDefault(_express);
@@ -13,6 +18,8 @@ var _errorhandler = require('errorhandler');
 var _errorhandler2 = _interopRequireDefault(_errorhandler);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var PORT = Number(process.env.PORT || 18000);
 
@@ -36,7 +43,7 @@ app.use((0, _errorhandler2.default)({
 }));
 
 app.get('/', function (req, res) {
-  res.json({ 'message': 'Hello World' });
+  res.json({ 'message': new HermesNLP() });
 });
 
 app.get('/webhook', function (req, res) {
@@ -56,3 +63,9 @@ console.log('localhost:' + PORT);
 process.on('uncaughtException', function (error) {
   console.log(error);
 });
+
+var HermesNLP = exports.HermesNLP = function HermesNLP() {
+  _classCallCheck(this, HermesNLP);
+
+  return "Hermes NLP";
+};

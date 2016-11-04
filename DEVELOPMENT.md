@@ -16,3 +16,6 @@
 
 ### Version
 `npm version [major | minor | patch | prepatch | preminor | premajor | prerelease | from-git]`
+
+### Access Token
+EAANRZBVDu9vABAMAFpwvtEMaPixOKndOmo2yPREZApvsleMlmgY6cLKD1A7MfegFyELRvYz7ZBjgjpKiKRtsYBdY1YAClFg62CTcI5dWbp6nK5FusyKRx2wrHCZBhS9gH6piPOKDx56CkRBBE8Tl9I8gtGSAByyV4yBDJxqBNLYV6pwJZBhg9
