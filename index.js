@@ -2,7 +2,7 @@ import express from 'express';
 import bodyParser from 'body-parser';
 import errorHandler from 'errorhandler';
 
-const PORT = 18000;
+const PORT =  Number(process.env.PORT || 18000);
 
 const app = express();
 
