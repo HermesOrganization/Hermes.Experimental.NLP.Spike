@@ -4,6 +4,7 @@
 ![inch-ci](http://inch-ci.org/github/HermesOrganization/Hermes.Experimental.NLP.Spike.svg?branch=master)
 [![Coverage Status](https://coveralls.io/repos/github/HermesOrganization/Hermes.Experimental.NLP.Spike/badge.svg?branch=master)](https://coveralls.io/github/HermesOrganization/Hermes.Experimental.NLP.Spike?branch=master)
 [![Code Climate](https://codeclimate.com/github/HermesOrganization/Hermes.Experimental.NLP.Spike/badges/gpa.svg)](https://codeclimate.com/github/HermesOrganization/Hermes.Experimental.NLP.Spike)
+[![Build Status](https://travis-ci.org/HermesOrganization/Hermes.Experimental.NLP.Spike.svg?branch=master)](https://travis-ci.org/HermesOrganization/Hermes.Experimental.NLP.Spike)
 
 ---------
 
