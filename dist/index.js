@@ -20,6 +20,12 @@ var PORT = Number(process.env.PORT || 18000);
 
 var app = (0, _express2.default)();
 
+var HermesNLP = function HermesNLP() {
+  _classCallCheck(this, HermesNLP);
+
+  return "Hermes NLP";
+};
+
 var hermes = new HermesNLP();
 
 app.use(_bodyParser2.default.urlencoded({
@@ -58,9 +64,3 @@ console.log('localhost:' + PORT);
 process.on('uncaughtException', function (error) {
   console.log(error);
 });
-
-var HermesNLP = function HermesNLP() {
-  _classCallCheck(this, HermesNLP);
-
-  return "Hermes NLP";
-};

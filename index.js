@@ -6,11 +6,19 @@ const PORT =  Number(process.env.PORT || 18000);
 
 const app = express();
 
+
+class HermesNLP {
+  constructor () {
+    return "Hermes NLP";
+  }
+}
+
 const hermes = new HermesNLP();
 
 app.use(bodyParser.urlencoded({
   extended: true
 }));
+
 
 app.use(bodyParser.json());
 
@@ -45,9 +53,3 @@ process.on('uncaughtException', error => {
   console.log(error);
 });
 
-
-class HermesNLP {
-  constructor () {
-    return "Hermes NLP";
-  }
-}
