@@ -28,7 +28,6 @@
     "babel-preset-node6": "^11.0.0",
     "babel-preset-stage-2": "^6.18.0",
     "babel-register": "^6.18.0",
-    "body-parser": "^1.15.2",
     "cross-spawn-async": "^2.2.5",
     "del": "^2.2.2",
     "eslint": "^3.9.1",
@@ -40,16 +39,17 @@
     "nodemon": "^1.11.0",
     "nsp": "^2.6.2",
     "nsp-formatter-checkstyle": "^1.0.1",
-    "pretty-error": "^2.0.2",
-    "request": "^2.78.0"
+    "pretty-error": "^2.0.2"
   },
   "dependencies": {
     "express": "^4.14.0",
+    "body-parser": "^1.15.2",
     "dotenv": "^2.0.0",
     "errorhandler": "^1.4.3",
     "node-uuid": "^1.4.7",
     "node-wit": "^4.1.0",
-    "winston": "^2.3.0"
+    "winston": "^2.3.0",
+    "request": "^2.78.0"
   },
   "engines": {
     "node": ">= 6.9.1"
