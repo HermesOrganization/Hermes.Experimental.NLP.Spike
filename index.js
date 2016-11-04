@@ -23,8 +23,15 @@ app.use(errorHandler({
   showStack: true
 }));
 
-app.get('', (req, res) => {
+app.get('/', (req, res) => {
   res.json({'message': 'Hello World'});
+});
+
+app.get('/webhook/', (req, res) => {
+  if (req.query['hub.verify_token'] === 'hermes') {
+    res.send(req.query['hub.challenge'])
+  }
+  res.send('Error, wrong token')
 });
 
 app.listen(PORT);
