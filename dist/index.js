@@ -12,6 +12,10 @@ var _errorhandler = require('errorhandler');
 
 var _errorhandler2 = _interopRequireDefault(_errorhandler);
 
+var _request = require('request');
+
+var _request2 = _interopRequireDefault(_request);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var PORT = Number(process.env.PORT || 18000);
@@ -61,7 +65,7 @@ function sendTextMessage(recipientId, messageText) {
 }
 
 function callSendAPI(messageData) {
-  request({
+  (0, _request2.default)({
     uri: 'https://graph.facebook.com/v2.6/me/messages',
     qs: { access_token: 'EAANRZBVDu9vABAMAFpwvtEMaPixOKndOmo2yPREZApvsleMlmgY6cLKD1A7MfegFyELRvYz7ZBjgjpKiKRtsYBdY1YAClFg62CTcI5dWbp6nK5FusyKRx2wrHCZBhS9gH6piPOKDx56CkRBBE8Tl9I8gtGSAByyV4yBDJxqBNLYV6pwJZBhg9' },
     method: 'POST',
