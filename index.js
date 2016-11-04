@@ -95,7 +95,17 @@ app.get('/', (req, res) => {
   res.json({'message': "Hermes.Experimental.NLP.Spike"});
 });
 
-app.get('/webhook', (req, res) => {
+app.get('/webhook', function(req, res) {
+  if (req.query['hub.mode'] === 'subscribe' && req.query['hub.verify_token'] === "hermes") {
+    console.log("Validating webhook");
+    res.status(200).send(req.query['hub.challenge']);
+  } else {
+    console.error("Failed validation. Make sure the validation tokens match.");
+    res.sendStatus(403);
+  }
+});
+
+app.post('/webhook', (req, res) => {
   var data = req.body;
 
   if (data.object === 'page') {
