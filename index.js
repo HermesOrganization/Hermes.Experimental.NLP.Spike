@@ -6,6 +6,8 @@ const PORT =  Number(process.env.PORT || 18000);
 
 const app = express();
 
+const hermes = new HermesNLP();
+
 app.use(bodyParser.urlencoded({
   extended: true
 }));
@@ -24,17 +26,14 @@ app.use(errorHandler({
 }));
 
 app.get('/', (req, res) => {
-  res.json({'message': new HermesNLP()});
+  res.json({'message': hermes});
 });
 
-app.get('/webhook', function(req, res) {
-  if (req.query['hub.mode'] === 'subscribe' &&
-      req.query['hub.verify_token'] === "hermes") {
-    console.log("Validating webhook");
-    res.status(200).send(req.query['hub.challenge']);
-  } else {
-    console.error("Failed validation. Make sure the validation tokens match.");
-    res.sendStatus(403);
+app.get('/webhook', (req, res) => {
+  var data = req.body;
+
+  if (data.object === 'page') {
+    res.json({'message': data});
   }
 });
 
@@ -47,7 +46,7 @@ process.on('uncaughtException', error => {
 });
 
 
-export class HermesNLP {
+class HermesNLP {
   constructor () {
     return "Hermes NLP";
   }

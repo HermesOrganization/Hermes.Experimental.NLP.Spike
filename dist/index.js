@@ -1,10 +1,5 @@
 'use strict';
 
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.HermesNLP = undefined;
-
 var _express = require('express');
 
 var _express2 = _interopRequireDefault(_express);
@@ -25,6 +20,8 @@ var PORT = Number(process.env.PORT || 18000);
 
 var app = (0, _express2.default)();
 
+var hermes = new HermesNLP();
+
 app.use(_bodyParser2.default.urlencoded({
   extended: true
 }));
@@ -43,16 +40,14 @@ app.use((0, _errorhandler2.default)({
 }));
 
 app.get('/', function (req, res) {
-  res.json({ 'message': new HermesNLP() });
+  res.json({ 'message': hermes });
 });
 
 app.get('/webhook', function (req, res) {
-  if (req.query['hub.mode'] === 'subscribe' && req.query['hub.verify_token'] === "hermes") {
-    console.log("Validating webhook");
-    res.status(200).send(req.query['hub.challenge']);
-  } else {
-    console.error("Failed validation. Make sure the validation tokens match.");
-    res.sendStatus(403);
+  var data = req.body;
+
+  if (data.object === 'page') {
+    res.json({ 'message': data });
   }
 });
 
@@ -64,7 +59,7 @@ process.on('uncaughtException', function (error) {
   console.log(error);
 });
 
-var HermesNLP = exports.HermesNLP = function HermesNLP() {
+var HermesNLP = function HermesNLP() {
   _classCallCheck(this, HermesNLP);
 
   return "Hermes NLP";
