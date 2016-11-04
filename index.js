@@ -7,12 +7,9 @@ const PORT =  Number(process.env.PORT || 18000);
 const app = express();
 
 
-class HermesNLP {
-  constructor () {
-    return "Hermes NLP";
-  }
 
-  receivedMessage (event) {
+
+  function receivedMessage (event) {
     let senderID = event.sender.id;
     let recipientID = event.recipient.id;
     let timeOfMessage = event.timestamp;
@@ -39,11 +36,11 @@ class HermesNLP {
     }
   }
 
-  sendGenericMessage (recipientId, messageText) {
+  function sendGenericMessage (recipientId, messageText) {
 
   }
 
-  sendTextMessage (recipientId, messageText) {
+  function sendTextMessage (recipientId, messageText) {
     let messageData = {
       recipient: {
         id: recipientId
@@ -56,7 +53,7 @@ class HermesNLP {
     callSendAPI(messageData);
   }
 
-  callSendAPI (messageData) {
+  function callSendAPI (messageData) {
     request({
       uri: 'https://graph.facebook.com/v2.6/me/messages',
       qs: { access_token: 'EAANRZBVDu9vABAMAFpwvtEMaPixOKndOmo2yPREZApvsleMlmgY6cLKD1A7MfegFyELRvYz7ZBjgjpKiKRtsYBdY1YAClFg62CTcI5dWbp6nK5FusyKRx2wrHCZBhS9gH6piPOKDx56CkRBBE8Tl9I8gtGSAByyV4yBDJxqBNLYV6pwJZBhg9' },
@@ -75,9 +72,6 @@ class HermesNLP {
     });
   }
 
-}
-
-const hermes = new HermesNLP();
 
 app.use(bodyParser.urlencoded({
   extended: true
@@ -98,7 +92,7 @@ app.use(errorHandler({
 }));
 
 app.get('/', (req, res) => {
-  res.json({'message': hermes});
+  res.json({'message': "Hermes.Experimental.NLP.Spike"});
 });
 
 app.get('/webhook', (req, res) => {
@@ -111,7 +105,7 @@ app.get('/webhook', (req, res) => {
 
       entry.messaging.forEach(function (event) {
         if (event.message) {
-          hermes.receivedMessage(event);
+          receivedMessage(event);
         } else {
           console.log('Webhook received unknown event: ', event);
         }
