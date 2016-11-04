@@ -35,8 +35,18 @@ app.use((0, _errorhandler2.default)({
   showStack: true
 }));
 
-app.get('', function (req, res) {
+app.get('/', function (req, res) {
   res.json({ 'message': 'Hello World' });
+});
+
+app.get('/webhook', function (req, res) {
+  if (req.query['hub.mode'] === 'subscribe' && req.query['hub.verify_token'] === "hermes") {
+    console.log("Validating webhook");
+    res.status(200).send(req.query['hub.challenge']);
+  } else {
+    console.error("Failed validation. Make sure the validation tokens match.");
+    res.sendStatus(403);
+  }
 });
 
 app.listen(PORT);
