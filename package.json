@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "node_modules/mocha/bin/mocha --compilers js:babel-register",
-    "start": "./node_modules/babel-cli/bin/babel-node ",
+    "start": "./node_modules/babel-cli/bin/babel-node index.js"
   },
   "repository": {
     "type": "git",
