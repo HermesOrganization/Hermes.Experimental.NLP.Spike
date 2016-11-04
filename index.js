@@ -105,8 +105,20 @@ app.get('/webhook', (req, res) => {
   var data = req.body;
 
   if (data.object === 'page') {
-    res.json({'message': data});
+    data.entry.forEach(function (entry) {
+      let pageID = entry.id;
+      let timeOfEvent = entry.time;
+
+      entry.messaging.forEach(function (event) {
+        if (event.message) {
+          hermes.receivedMessage(event);
+        } else {
+          console.log('Webhook received unknown event: ', event);
+        }
+      });
+    });
   }
+  res.sendStatus(200);
 });
 
 app.listen(PORT);
