@@ -5,8 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "node_modules/mocha/bin/mocha --compilers js:babel-register",
-    "start": "babel lib -d dist",
-    "serve": "node dist/index.js"
+    "start": "./node_modules/babel-cli/bin/babel-node ",
   },
   "repository": {
     "type": "git",
@@ -45,6 +44,7 @@
     "request": "^2.78.0"
   },
   "dependencies": {
+    "babel": "^6.5.2",
     "dotenv": "^2.0.0",
     "node-uuid": "^1.4.7",
     "node-wit": "^4.1.0",
