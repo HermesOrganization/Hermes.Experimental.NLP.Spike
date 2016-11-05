@@ -39,12 +39,12 @@
     "nodemon": "^1.11.0",
     "nsp": "^2.6.2",
     "nsp-formatter-checkstyle": "^1.0.1",
-    "pretty-error": "^2.0.2"
+    "pretty-error": "^2.0.2",
+    "dotenv": "^2.0.0"
   },
   "dependencies": {
     "body-parser": "^1.15.2",
     "crypto": "0.0.3",
-    "dotenv": "^2.0.0",
     "errorhandler": "^1.4.3",
     "express": "^4.14.0",
     "node-fetch": "https://registry.npmjs.org/node-fetch/-/node-fetch-1.6.3.tgz",

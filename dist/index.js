@@ -30,8 +30,6 @@ var _nodeWit2 = _interopRequireDefault(_nodeWit);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-require('dotenv').config();
-
 var Wit = _nodeWit2.default.Wit;
 var log = _nodeWit2.default.log;
 

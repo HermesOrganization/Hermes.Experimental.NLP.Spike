@@ -8,9 +8,6 @@ import fetch from 'node-fetch';
 import crypto from 'crypto';
 import witapi from 'node-wit';
 
-require('dotenv').config();
-
-
 let Wit = witapi.Wit;
 let log = witapi.log;
 
