@@ -1,169 +1,148 @@
+'use strict';
+
 import express from 'express';
 import bodyParser from 'body-parser';
 import errorHandler from 'errorhandler';
 import request from 'request';
+import fetch from 'node-fetch';
+import crypto from 'crypto';
+import witapi from 'node-wit';
 
-const PORT =  Number(process.env.PORT || 18000);
+require('dotenv').config();
+
+
+let Wit = witapi.Wit;
+let log = witapi.log;
+
+const PORT = process.env.PORT || 8445;
+
+const WIT_TOKEN = process.env.WIT_SERVER_ACCESS_TOKEN;
+
+const FB_PAGE_TOKEN = process.env.FB_PAGE_TOKEN;
+if (!FB_PAGE_TOKEN) { throw new Error('missing FB_PAGE_TOKEN') }
+const FB_APP_SECRET = process.env.FB_APP_SECRET;
+if (!FB_APP_SECRET) { throw new Error('missing FB_APP_SECRET') }
+
+let FB_VERIFY_TOKEN = null;
+crypto.randomBytes(8, (err, buff) => {
+  if (err) throw err;
+  FB_VERIFY_TOKEN = buff.toString('hex');
+  console.log(`/webhook will accept the Verify Token "${FB_VERIFY_TOKEN}"`);
+});
+
+
+const fbMessage = (id, text) => {
+  const body = JSON.stringify({
+    recipient: { id },
+    message: { text },
+  });
+  const qs = 'access_token=' + encodeURIComponent(FB_PAGE_TOKEN);
+  return fetch('https://graph.facebook.com/me/messages?' + qs, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body,
+  })
+  .then(rsp => rsp.json())
+  .then(json => {
+    if (json.error && json.error.message) {
+      throw new Error(json.error.message);
+    }
+    return json;
+  });
+};
+
+const sessions = {};
+
+const findOrCreateSession = (fbid) => {
+  let sessionId;
+  Object.keys(sessions).forEach(k => {
+    if (sessions[k].fbid === fbid) {
+      sessionId = k;
+    }
+  });
+  if (!sessionId) {
+    sessionId = new Date().toISOString();
+    sessions[sessionId] = {fbid: fbid, context: {}};
+  }
+  return sessionId;
+};
+
+const actions = {
+  send({sessionId}, {text}) {
+    const recipientId = sessions[sessionId].fbid;
+    if (recipientId) {
+      return fbMessage(recipientId, text)
+      .then(() => null)
+      .catch((err) => {
+        console.error(
+          'Oops! An error occurred while forwarding the response to',
+          recipientId,
+          ':',
+          err.stack || err
+        );
+      });
+    } else {
+      console.error('Oops! Couldn\'t find user for session:', sessionId);
+      return Promise.resolve()
+    }
+  },
+};
+
+const wit = new Wit({
+  accessToken: WIT_TOKEN,
+  actions,
+  logger: new log.Logger(log.INFO)
+});
 
 const app = express();
-
-
-
-
-  function receivedMessage (event) {
-    let senderID = event.sender.id;
-    let recipientID = event.recipient.id;
-    let timeOfMessage = event.timestamp;
-    let message = event.message;
-
-    console.log("Received message for user %d and page %d at %d with message: ", senderID, recipientID, timeOfMessage);
-    console.log(JSON.stringify(message));
-
-    let messageId = message.mid;
-    let messageText = message.text;
-    let messageAttachments = message.attachments;
-
-    if (messageText) {
-      switch (messageText) {
-        case 'hello':
-          sendHelloMessage(senderID);
-          break;
-
-        case 'generic':
-          sendGenericMessage(senderID);
-          break;
-
-        default:
-          sendTextMessage(senderID, messageText);
-      }
-    } else if (messageAttachments) {
-      sendTextMessage(senderID, "Message with attachment received");
-    }
-  }
-
-  function sendGenericMessage (recipientId, messageText) {
-
-  }
-
-  function sendHelloMessage (recipientId, messageText) {
-    let messageData = {
-      recipient: {
-        id: recipientId
-      },
-      message: {
-          "attachment": {
-              "type": "template",
-              "payload": {
-                  "template_type": "generic",
-                  "elements": [{
-                      "title": "First card",
-                      "subtitle": "Element #1 of an hscroll",
-                      "image_url": "http://messengerdemo.parseapp.com/img/rift.png",
-                      "buttons": [{
-                          "type": "web_url",
-                          "url": "https://www.messenger.com",
-                          "title": "web url"
-                      }, {
-                          "type": "postback",
-                          "title": "Postback",
-                          "payload": "Payload for first element in a generic bubble",
-                      }],
-                  }, {
-                      "title": "Second card",
-                      "subtitle": "Element #2 of an hscroll",
-                      "image_url": "http://messengerdemo.parseapp.com/img/gearvr.png",
-                      "buttons": [{
-                          "type": "postback",
-                          "title": "Postback",
-                          "payload": "Payload for second element in a generic bubble",
-                      }],
-                  }]
-              }
-          }
-        }
-    };
-    callSendAPI(messageData);
-  }
-
-  function sendTextMessage (recipientId, messageText) {
-    let messageData = {
-      recipient: {
-        id: recipientId
-      },
-      message: {
-        text: messageText
-      }
-    };
-
-    callSendAPI(messageData);
-  }
-
-  function callSendAPI (messageData) {
-    request({
-      uri: 'https://graph.facebook.com/v2.6/me/messages',
-      qs: { access_token: 'EAANRZBVDu9vABAMAFpwvtEMaPixOKndOmo2yPREZApvsleMlmgY6cLKD1A7MfegFyELRvYz7ZBjgjpKiKRtsYBdY1YAClFg62CTcI5dWbp6nK5FusyKRx2wrHCZBhS9gH6piPOKDx56CkRBBE8Tl9I8gtGSAByyV4yBDJxqBNLYV6pwJZBhg9' },
-      method: 'POST',
-      json: messageData
-    }, function (error, response, body) {
-      if (!error && response.statusCode == 200) {
-        var recipientId = body.recipient_id;
-        var messageId = body.message_id;
-        console.log("Successfully sent generic message with id %s to recipient %s", messageId, recipientId);
-      } else {
-        console.error("Unable to send message.");
-        console.error(response);
-        console.error(error);
-      }
-    });
-  }
-
-
-app.use(bodyParser.urlencoded({
-  extended: true
-}));
-
-
-app.use(bodyParser.json());
-
-app.use((req, res, next) => {
-  console.log("%s %s", req.method, req.url);
-  console.log(req.body);
+app.use(({method, url}, rsp, next) => {
+  rsp.on('finish', () => {
+    console.log(`${rsp.statusCode} ${method} ${url}`);
+  });
   next();
 });
+app.use(bodyParser.json({ verify: verifyRequestSignature }));
 
-app.use(errorHandler({
-  dumpExceptions: true,
-  showStack: true
-}));
-
-app.get('/', (req, res) => {
-  res.json({'message': "Hermes.Experimental.NLP.Spike"});
-});
-
-app.get('/webhook', function(req, res) {
-  if (req.query['hub.mode'] === 'subscribe' && req.query['hub.verify_token'] === "hermes") {
-    console.log("Validating webhook");
-    res.status(200).send(req.query['hub.challenge']);
+app.get('/webhook', (req, res) => {
+  if (req.query['hub.mode'] === 'subscribe' &&
+    req.query['hub.verify_token'] === FB_VERIFY_TOKEN) {
+    res.send(req.query['hub.challenge']);
   } else {
-    console.error("Failed validation. Make sure the validation tokens match.");
-    res.sendStatus(403);
+    res.sendStatus(400);
   }
 });
 
 app.post('/webhook', (req, res) => {
-  var data = req.body;
+  const data = req.body;
 
   if (data.object === 'page') {
-    data.entry.forEach(function (entry) {
-      let pageID = entry.id;
-      let timeOfEvent = entry.time;
+    data.entry.forEach(entry => {
+      entry.messaging.forEach(event => {
+        if (event.message && !event.message.is_echo) {
+          const sender = event.sender.id;
+          const sessionId = findOrCreateSession(sender);
 
-      entry.messaging.forEach(function (event) {
-        if (event.message) {
-          console.log(event.message);
-          receivedMessage(event);
+          // We retrieve the message content
+          const {text, attachments} = event.message;
+
+          if (attachments) {
+            fbMessage(sender, 'Sorry I can only process text messages for now.')
+            .catch(console.error);
+          } else if (text) {
+            wit.runActions(
+              sessionId,
+              text,
+              sessions[sessionId].context
+            ).then((context) => {
+              console.log('Waiting for next user messages');
+              sessions[sessionId].context = context;
+            })
+            .catch((err) => {
+              console.error('Oops! Got an error from Wit: ', err.stack || err);
+            })
+          }
         } else {
-          console.log('Webhook received unknown event: ', event);
+          console.log('received event', JSON.stringify(event));
         }
       });
     });
@@ -171,11 +150,28 @@ app.post('/webhook', (req, res) => {
   res.sendStatus(200);
 });
 
+
+function verifyRequestSignature(req, res, buf) {
+  var signature = req.headers["x-hub-signature"];
+
+  if (!signature) {
+    // For testing, let's log an error. In production, you should throw an
+    // error.
+    console.error("Couldn't validate the signature.");
+  } else {
+    var elements = signature.split('=');
+    var method = elements[0];
+    var signatureHash = elements[1];
+
+    var expectedHash = crypto.createHmac('sha1', FB_APP_SECRET)
+                        .update(buf)
+                        .digest('hex');
+
+    if (signatureHash != expectedHash) {
+      throw new Error("Couldn't validate the request signature.");
+    }
+  }
+}
+
 app.listen(PORT);
-
-console.log(`localhost:${PORT}`);
-
-process.on('uncaughtException', error => {
-  console.log(error);
-});
-
+console.log('Listening on :' + PORT + '...');

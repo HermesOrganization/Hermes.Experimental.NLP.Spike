@@ -16,145 +16,123 @@ var _request = require('request');
 
 var _request2 = _interopRequireDefault(_request);
 
+var _nodeFetch = require('node-fetch');
+
+var _nodeFetch2 = _interopRequireDefault(_nodeFetch);
+
+var _crypto = require('crypto');
+
+var _crypto2 = _interopRequireDefault(_crypto);
+
+var _nodeWit = require('node-wit');
+
+var _nodeWit2 = _interopRequireDefault(_nodeWit);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var PORT = Number(process.env.PORT || 18000);
+require('dotenv').config();
 
-var app = (0, _express2.default)();
+var Wit = _nodeWit2.default.Wit;
+var log = _nodeWit2.default.log;
 
-function receivedMessage(event) {
-  var senderID = event.sender.id;
-  var recipientID = event.recipient.id;
-  var timeOfMessage = event.timestamp;
-  var message = event.message;
+var PORT = process.env.PORT || 8445;
 
-  console.log("Received message for user %d and page %d at %d with message: ", senderID, recipientID, timeOfMessage);
-  console.log(JSON.stringify(message));
+var WIT_TOKEN = process.env.WIT_SERVER_ACCESS_TOKEN;
 
-  var messageId = message.mid;
-  var messageText = message.text;
-  var messageAttachments = message.attachments;
-
-  if (messageText) {
-    switch (messageText) {
-      case 'hello':
-        sendHelloMessage(senderID);
-        break;
-
-      case 'generic':
-        sendGenericMessage(senderID);
-        break;
-
-      default:
-        sendTextMessage(senderID, messageText);
-    }
-  } else if (messageAttachments) {
-    sendTextMessage(senderID, "Message with attachment received");
-  }
+var FB_PAGE_TOKEN = process.env.FB_PAGE_TOKEN;
+if (!FB_PAGE_TOKEN) {
+  throw new Error('missing FB_PAGE_TOKEN');
+}
+var FB_APP_SECRET = process.env.FB_APP_SECRET;
+if (!FB_APP_SECRET) {
+  throw new Error('missing FB_APP_SECRET');
 }
 
-function sendGenericMessage(recipientId, messageText) {}
+var FB_VERIFY_TOKEN = null;
+_crypto2.default.randomBytes(8, function (err, buff) {
+  if (err) throw err;
+  FB_VERIFY_TOKEN = buff.toString('hex');
+  console.log('/webhook will accept the Verify Token "' + FB_VERIFY_TOKEN + '"');
+});
 
-function sendHelloMessage(recipientId, messageText) {
-  var messageData = {
-    recipient: {
-      id: recipientId
-    },
-    message: {
-      "attachment": {
-        "type": "template",
-        "payload": {
-          "template_type": "generic",
-          "elements": [{
-            "title": "First card",
-            "subtitle": "Element #1 of an hscroll",
-            "image_url": "http://messengerdemo.parseapp.com/img/rift.png",
-            "buttons": [{
-              "type": "web_url",
-              "url": "https://www.messenger.com",
-              "title": "web url"
-            }, {
-              "type": "postback",
-              "title": "Postback",
-              "payload": "Payload for first element in a generic bubble"
-            }]
-          }, {
-            "title": "Second card",
-            "subtitle": "Element #2 of an hscroll",
-            "image_url": "http://messengerdemo.parseapp.com/img/gearvr.png",
-            "buttons": [{
-              "type": "postback",
-              "title": "Postback",
-              "payload": "Payload for second element in a generic bubble"
-            }]
-          }]
-        }
-      }
-    }
-  };
-  callSendAPI(messageData);
-}
-
-function sendTextMessage(recipientId, messageText) {
-  var messageData = {
-    recipient: {
-      id: recipientId
-    },
-    message: {
-      text: messageText
-    }
-  };
-
-  callSendAPI(messageData);
-}
-
-function callSendAPI(messageData) {
-  (0, _request2.default)({
-    uri: 'https://graph.facebook.com/v2.6/me/messages',
-    qs: { access_token: 'EAANRZBVDu9vABAMAFpwvtEMaPixOKndOmo2yPREZApvsleMlmgY6cLKD1A7MfegFyELRvYz7ZBjgjpKiKRtsYBdY1YAClFg62CTcI5dWbp6nK5FusyKRx2wrHCZBhS9gH6piPOKDx56CkRBBE8Tl9I8gtGSAByyV4yBDJxqBNLYV6pwJZBhg9' },
+var fbMessage = function fbMessage(id, text) {
+  var body = JSON.stringify({
+    recipient: { id: id },
+    message: { text: text }
+  });
+  var qs = 'access_token=' + encodeURIComponent(FB_PAGE_TOKEN);
+  return (0, _nodeFetch2.default)('https://graph.facebook.com/me/messages?' + qs, {
     method: 'POST',
-    json: messageData
-  }, function (error, response, body) {
-    if (!error && response.statusCode == 200) {
-      var recipientId = body.recipient_id;
-      var messageId = body.message_id;
-      console.log("Successfully sent generic message with id %s to recipient %s", messageId, recipientId);
-    } else {
-      console.error("Unable to send message.");
-      console.error(response);
-      console.error(error);
+    headers: { 'Content-Type': 'application/json' },
+    body: body
+  }).then(function (rsp) {
+    return rsp.json();
+  }).then(function (json) {
+    if (json.error && json.error.message) {
+      throw new Error(json.error.message);
+    }
+    return json;
+  });
+};
+
+var sessions = {};
+
+var findOrCreateSession = function findOrCreateSession(fbid) {
+  var sessionId = void 0;
+  Object.keys(sessions).forEach(function (k) {
+    if (sessions[k].fbid === fbid) {
+      sessionId = k;
     }
   });
-}
+  if (!sessionId) {
+    sessionId = new Date().toISOString();
+    sessions[sessionId] = { fbid: fbid, context: {} };
+  }
+  return sessionId;
+};
 
-app.use(_bodyParser2.default.urlencoded({
-  extended: true
-}));
+var actions = {
+  send: function send(_ref, _ref2) {
+    var sessionId = _ref.sessionId;
+    var text = _ref2.text;
 
-app.use(_bodyParser2.default.json());
+    var recipientId = sessions[sessionId].fbid;
+    if (recipientId) {
+      return fbMessage(recipientId, text).then(function () {
+        return null;
+      }).catch(function (err) {
+        console.error('Oops! An error occurred while forwarding the response to', recipientId, ':', err.stack || err);
+      });
+    } else {
+      console.error('Oops! Couldn\'t find user for session:', sessionId);
+      return Promise.resolve();
+    }
+  }
+};
 
-app.use(function (req, res, next) {
-  console.log("%s %s", req.method, req.url);
-  console.log(req.body);
+var wit = new Wit({
+  accessToken: WIT_TOKEN,
+  actions: actions,
+  logger: new log.Logger(log.INFO)
+});
+
+var app = (0, _express2.default)();
+app.use(function (_ref3, rsp, next) {
+  var method = _ref3.method,
+      url = _ref3.url;
+
+  rsp.on('finish', function () {
+    console.log(rsp.statusCode + ' ' + method + ' ' + url);
+  });
   next();
 });
-
-app.use((0, _errorhandler2.default)({
-  dumpExceptions: true,
-  showStack: true
-}));
-
-app.get('/', function (req, res) {
-  res.json({ 'message': "Hermes.Experimental.NLP.Spike" });
-});
+app.use(_bodyParser2.default.json({ verify: verifyRequestSignature }));
 
 app.get('/webhook', function (req, res) {
-  if (req.query['hub.mode'] === 'subscribe' && req.query['hub.verify_token'] === "hermes") {
-    console.log("Validating webhook");
-    res.status(200).send(req.query['hub.challenge']);
+  if (req.query['hub.mode'] === 'subscribe' && req.query['hub.verify_token'] === FB_VERIFY_TOKEN) {
+    res.send(req.query['hub.challenge']);
   } else {
-    console.error("Failed validation. Make sure the validation tokens match.");
-    res.sendStatus(403);
+    res.sendStatus(400);
   }
 });
 
@@ -163,15 +141,31 @@ app.post('/webhook', function (req, res) {
 
   if (data.object === 'page') {
     data.entry.forEach(function (entry) {
-      var pageID = entry.id;
-      var timeOfEvent = entry.time;
-
       entry.messaging.forEach(function (event) {
-        if (event.message) {
-          console.log(event.message);
-          receivedMessage(event);
+        if (event.message && !event.message.is_echo) {
+          (function () {
+            var sender = event.sender.id;
+            var sessionId = findOrCreateSession(sender);
+
+            // We retrieve the message content
+            var _event$message = event.message,
+                text = _event$message.text,
+                attachments = _event$message.attachments;
+
+
+            if (attachments) {
+              fbMessage(sender, 'Sorry I can only process text messages for now.').catch(console.error);
+            } else if (text) {
+              wit.runActions(sessionId, text, sessions[sessionId].context).then(function (context) {
+                console.log('Waiting for next user messages');
+                sessions[sessionId].context = context;
+              }).catch(function (err) {
+                console.error('Oops! Got an error from Wit: ', err.stack || err);
+              });
+            }
+          })();
         } else {
-          console.log('Webhook received unknown event: ', event);
+          console.log('received event', JSON.stringify(event));
         }
       });
     });
@@ -179,10 +173,25 @@ app.post('/webhook', function (req, res) {
   res.sendStatus(200);
 });
 
+function verifyRequestSignature(req, res, buf) {
+  var signature = req.headers["x-hub-signature"];
+
+  if (!signature) {
+    // For testing, let's log an error. In production, you should throw an
+    // error.
+    console.error("Couldn't validate the signature.");
+  } else {
+    var elements = signature.split('=');
+    var method = elements[0];
+    var signatureHash = elements[1];
+
+    var expectedHash = _crypto2.default.createHmac('sha1', FB_APP_SECRET).update(buf).digest('hex');
+
+    if (signatureHash != expectedHash) {
+      throw new Error("Couldn't validate the request signature.");
+    }
+  }
+}
+
 app.listen(PORT);
-
-console.log('localhost:' + PORT);
-
-process.on('uncaughtException', function (error) {
-  console.log(error);
-});
+console.log('Listening on :' + PORT + '...');
